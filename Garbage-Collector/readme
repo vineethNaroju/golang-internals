@@ -1,0 +1,51 @@
+*** About me ***
+Heap and stack.
+
+Heap is a graph with objects as nodes and headed with root node.
+
+Go prefers to allocate memory on stack. 
+Go has a stack per go-routine and whenever possible it will allocate to this stack.
+Go compiler attemps to prove a variable won't be needed outside func by performing
+escape analysis.
+If Go compiler can determise lifetime of a variable, it will be allocated to stack.
+Generally, a variable pointer to an object => objects is stored on heap.
+
+*** Garbage Collector ***
+Two parts = Mutator + Collector.
+
+Mutator -> executes code, allocates new objects to heap, updates them and marks them
+as un-reachable as required.
+
+Collector -> Executes GC logic and finds objects that should be freed.
+
+*** Implementation ***
+
+Non-generational concurrent, tri-color mark and sweep GC.
+
+Generational Hypothesis -> short lived objects are reclaimed most often.
+Go compiler optimization allows it to allocate objects with a known lifetime to stack.
+This means fewer objects on heap and generational GC is not required.
+
+Concurrent -> Collector and Mutator run at the same time.
+
+Mark and Sweep -> Collector traverses heap and marks unreachable objects. Follow up phase
+removes them.
+
+*** Tri-Color Mark and Sweep ***
+
+Go has all go-routines reach a GC safe point with a process called "Stop the World"
+This temporarily stops program and turns a "Write Barrier" on to maintain data integrity
+on heap. This allows to run go-routines and collector concurrently.
+
+Once all go-routines have their "Write Barrier" on, runtime "Starts the World" and 
+workers perform garbage collection.
+
+Root objects are Grey. GC scans stacks, global and heap pointers to mark in-use nodes.
+Worker stops a go-routine, scans it's stack and marks found nodes as Grey.
+
+The Grey objects are then enqueued to be turned Black. Once all Grey are converted to 
+Blacks, Collector will "Stop the world" and clean up White nodes.
+
+*** More ***
+
+If GOGC=100 and we’re using 4M, we’ll GC again when we get to 8M (this mark is tracked in next_gc variable). This keeps the GC cost in linear proportion to the allocation cost. Adjusting GOGC just changes the linear constant (and also the amount of extra memory used).
