@@ -1,0 +1,7 @@
+The work sitting on tail of it's own deque - 
+1. most likely needed to complete parent's join => better performance and low memory footprint.
+2. most likely to be in our processor's cache => since it's the work thread was last working
+on prior to its current work => fewer cache misses.
+
+G -> goroutine, M -> OS thread (machine in source code), P -> context(processor in src code)
+G holds current state of go-routine, it's program counter PC.
